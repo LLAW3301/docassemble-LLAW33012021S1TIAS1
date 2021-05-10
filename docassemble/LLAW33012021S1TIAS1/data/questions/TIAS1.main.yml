@@ -1,0 +1,86 @@
+---
+include:
+  - TIAS1.questions.yml
+  - TIAS1.dates.yml
+---
+objects:
+  - endpoints: DADict
+---
+features:
+  css: TIAS1.style.css
+  debug: True
+  hide standard menu: False
+---
+mandatory: True
+code: |
+  # This if statement ensures that the user only progresses to the main body of 
+  # substantive questions if they answer positively to the intial eligibiliy 
+  # questions, otherwise they'll be directed to an end screen. 
+  if User_Agree and Lease_SA and Lease_Residential:
+    # This nested if statement directs users down the 'Form 2 (Grounds 
+    # Specified)' limb of both sides of the flow chart. Essentially, if the 
+    # tenant recieved a Form 2 from their landlord, then that landlord must
+    # be seeking to terminate the tenancy agreement on the ground of breach 
+    # of that agreement.
+    if Lease_Type and Form_Type == 'Form 2':
+      Ground_Specified
+      # If the breach of the tenancy agreement relied on by the landlord is 
+      # non-payment of rent, then the notice period can only begin after rent
+      # is not paid for .... and ... 
+      if Ground_Specified == 'Non-Payment of Rent':
+        Rent_Last_Paid
+        Notice_Period = 7
+      else:
+        Notice_Period = 7
+        Vacate_Period = 7
+    elif Lease_Type == "Lease_Periodic" and Form_Type == 'Form 3':
+      Without_Grounds_or_Certain_Purpose
+      if Without_Grounds_or_Certain_Purpose == 'No grounds specified':
+        Notice_Period = 90
+      else:
+        Certain_Purpose
+        Notice_Period = 60
+    # This nested elif statement directs users down the 'Form 3 (Without
+    # Grounds)' and 'Form 3 (Posession Required by Landlord for Certain 
+    # Purpose)' limb of the left ('Fixed') side of the flow chart. As on
+    # the opposite side of the flow chart, it first seeks to distinguish
+    # whether the landlord is relying on s 83A(1)(2) or s 81(1). 
+    elif Lease_Type =='Lease_Fixed' and Form_Type == 'Form 3':
+      Without_Grounds_or_Certain_Purpose
+    # If the landlord is relying on s 83A(1)(2), then the user is asked the 
+    # expiry of the lease in question as the landlord can terminate the lease 
+    # upon expiry but only after providing 28 days notice. 
+      if Without_Grounds_or_Certain_Purpose == 'No grounds specified':
+        Lease_Expiry
+    # Nonetheless, we do not believe this limb is redundant on the left 
+    # (periodic) side of the flow chart as the user could still potentially 
+    # be served such notice by the landlord, whether mistakenly or knowingly. 
+      elif Without_Grounds_or_Certain_Purpose == 'Possession is required by landlord for certain purpose':
+        pass
+    endpoints['final_screen']
+  else:
+    endpoints['ineligible']
+---
+event: endpoints['final_screen']
+question: ""
+subquestion:  |
+ # Need to insert an if statement here so that far left side of flow chart words
+ # (i.e., Fixed, Form 3).
+ ${ interval.days } days
+  % if Lease_Type and Form_Type == 'Form 2' and Ground_Specified != 'Non-Payment of Rent':
+ ${ Until_Vacate.days } days
+ % elif Lease_Type =='Lease_Fixed' and Form_Type == 'Form 3' and Without_Grounds_or_Certain_Purpose == 'No grounds specified':
+ ${ Until_Expiry.days } days
+ % endif
+---
+event: endpoints['ineligible']
+question: ""
+subquestion:  |
+  % if User_Agree == False:
+    User_Disagree_Final_Screen
+  % elif Lease_SA == False:
+    Lease_Not_SA_Final_Screen
+  % elif Lease_Residential == False:
+    Lease_Not_Residential_Final_Screen
+  % endif
+---

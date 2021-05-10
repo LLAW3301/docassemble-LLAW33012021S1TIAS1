@@ -1,0 +1,26 @@
+---
+code: |
+  if Lease_Type and Form_Type == 'Form 2':
+    # End Date equals date form was recieved plus the notice period. Obviously, 
+    # the date the form was recieved varies from user to user, and the length of
+    # the notice period given depends on the ground relied upon by the landlord.
+    End_Date = Date_Form_Recieved + date_interval(days=Notice_Period)
+    # Current Date equals the current date.
+    Current_Date = current_datetime()
+    # interval calculates the difference between the End Date and the Current 
+    # Date. That is, how long from today until the expiration of the notice
+    # period.
+    interval = date_difference(starting=Current_Date, ending=End_Date)
+  elif Lease_Type == "Lease_Periodic" and Form_Type == 'Form 3':
+    End_Date = Date_Form_Recieved + date_interval(days=Notice_Period)
+    Current_Date = current_datetime()
+    interval = date_difference(starting=Current_Date, ending=End_Date)
+  elif Lease_Type == "Lease_Fixed" and Form_Type == 'Form 3':
+    pass
+---
+code: |
+  if Lease_Type and Form_Type == 'Form 2' and Ground_Specified != 'Non-Payment of Rent':
+    End_Date = Date_Form_Recieved + date_interval(days=Notice_Period) + date_interval(days=Vacate_Period)
+    Current_Date = current_datetime()
+    Until_Vacate = date_difference(starting=Current_Date, ending=End_Date)
+---

@@ -1,0 +1,124 @@
+---
+question: ""
+subquestion: |
+  Welcome to the SACAT Homelessness Advisor. This application is designed
+  to help you find services that may assist you if you are facing homelessness.
+  
+  If you cannot understand what a question is asking, please click the help button in the top right corner
+ 
+  ***Disclaimer:***   
+  This application provides information only. The developer accepts no liability to any person for any loss, damage, cost or expense suffered as a result of any use of or reliance on any of the information. The information in this application may change, is not advice and should not be relied upon for any action or failure to act. The developer accepts no responsibility for the accuracy or completeness of the material contained in this application.
+  
+  Do you accept these terms?
+yesno: User_Agree
+---
+question: |
+  Who is the leasee?
+field: Who_User
+dropdown:
+  - I am
+  - partner
+  - family member
+  - friend
+---
+question: |
+  % if Who_User == 'I am':
+  Does your lease relate to a premises in South Australia?
+  % else:
+  Does your ${ Who_User }'s lease relate to a premises in South Australia?
+  % endif
+yesno: Lease_SA
+---
+question: |
+  % if Who_User == 'I am':
+  Do you occupy that premise for the purpose of residence?
+  % else:
+  Does your ${ Who_User } occupy that premise for the purpose of residence?
+  % endif
+yesno: Lease_Residential
+---
+question: |
+  % if Who_User == 'I am':
+  Does your lease specify a date when it expires?
+  % else:
+  Does your ${ Who_User }'s lease specify a date when it expires?
+  % endif
+field: Lease_Type
+buttons:
+  - "Yes": Lease_Fixed
+  - "No": Lease_Periodic
+help: |
+  As you will see in our amended Product Scope Document, 
+---
+question: |
+  % if Who_User == 'I am':
+  Did you receive a Form 2 or a Form 3?
+  % else:
+  Did your ${Who_User} receive a Form 2 or a Form 3?
+  % endif
+field: Form_Type
+Choices:
+  - Form 2
+  - Form 3
+help: |
+  Again, as 
+---
+question: |
+  % if Who_User == 'I am':
+  On what ground did you allegedly breach the lease?
+  % else:
+  On what ground did your ${ Who_User } allegedly breach the lease?
+  % endif
+field: Ground_Specified
+Choices:
+  - Non-Payment of Rent
+  - Other
+help: |
+  If you like leases
+---
+question: |
+  % if Who_User == 'I am':
+  When did you receive the ${ Form_Type }?
+  % else:
+  When did your ${ Who_User } tenant receive the ${ Form_Type }?
+  % endif
+fields:
+  - no label: Date_Form_Recieved
+    datatype: date
+---
+question: |
+  % if Who_User == 'I am':
+  When did you last pay rent?
+  % else:
+  When did your ${ Who_User } last pay rent?
+  % endif
+fields:
+  - no label: Rent_Last_Paid
+    datatype: date
+---
+question: |
+  Were no grounds specified or is possession of the premises required by the landlord for a certain purpose?
+field: Without_Grounds_or_Certain_Purpose
+Choices:
+  - No grounds specified
+  - Possession is required by landlord for certain purpose
+---
+question: |
+  For what certain purpose is possession required by the landlord?
+field: Certain_Purpose
+dropdown:
+  - demolition
+  - Repairs or renovations
+  - the landlord's own occupation
+  - selling the premises
+---
+question: |
+  % if Who_User == 'I am':
+  When does your lease expiry?
+  % else:
+  When does your ${ Who_User } lease expiry?
+  % endif
+fields:
+  - no label: Lease_Expiry
+    datatype: date
+---
