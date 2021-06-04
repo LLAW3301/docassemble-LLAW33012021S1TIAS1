@@ -1,96 +1,167 @@
 ---
-question: ""
+question: Welcome to Tenny!
 subquestion: |
-  Welcome to the SACAT Homelessness Advisor. This application is designed
-  to help you find services that may assist you if you are facing homelessness.
+  Tenny is an out of hours tenancy advisor designed to inform tenants facing eviction of their rights and responsibilities under the *Residential Tenancies Act 1995* (SA).
   
-  If you cannot understand what a question is asking, please click the help button in the top right corner
+  If you cannot understand what a question is asking, please click the 'Help' button to the right of RentRight SA's logo.
  
-  ***Disclaimer:***   
-  This application provides information only. The developer accepts no liability to any person for any loss, damage, cost or expense suffered as a result of any use of or reliance on any of the information. The information in this application may change, is not advice and should not be relied upon for any action or failure to act. The developer accepts no responsibility for the accuracy or completeness of the material contained in this application.
+  **Disclaimer:**  
+  This application is strictly for educational purposes and provides information only. The developer accepts no liability to any person for any loss, damage, cost or expense suffered as a result of any use of or reliance on any of the information. The information in this application may change, is not advice and should not be relied upon for any action or failure to act. The developer accepts no responsibility for the accuracy or completeness of the material contained in this application.
   
-  Do you accept these terms?
+  ***Do you accept these terms?***
 yesno: User_Agree
 ---
 question: |
-  Who is the leasee?
-field: Who_User
+  Who was the notice addressed to?
+field: Who_Tenant
 dropdown:
-  - I am
-  - partner
-  - family member
-  - friend
+  - Me: User
+  - My partner: partner
+  - A family member: family member
+  - A friend: friend
+  - Someone else: Other
+default: User
 ---
 question: |
-  % if Who_User == 'I am':
-  Does your lease relate to a premises in South Australia?
+  % if Who_Tenant == 'User':
+  Is your lease over a dwelling in South Australia?
+  % elif Who_Tenant == 'Other':
+  Is the occupier's lease over a dwelling in South Australia?
   % else:
-  Does your ${ Who_User }'s lease relate to a premises in South Australia?
+  Is your ${ Who_Tenant }'s lease over a dwelling in South Australia?
   % endif
 yesno: Lease_SA
+default: yes
 ---
 question: |
-  % if Who_User == 'I am':
-  Do you occupy that premise for the purpose of residence?
+  % if Who_Tenant == 'User':
+  Do you live in that dwelling?
+  % elif Who_Tenant == 'Other':
+  Does the occupier live in that dwelling?
   % else:
-  Does your ${ Who_User } occupy that premise for the purpose of residence?
+  Does your ${ Who_Tenant } live in that dwelling?
   % endif
 yesno: Lease_Residential
+default: yes
 ---
 question: |
-  % if Who_User == 'I am':
-  Does your lease specify a date when it expires?
+  % if Who_Tenant == 'User':
+  Is the dwelling you occupy a house, an apartment, a townhouse or a unit?
+  % elif Who_Tenant == 'Other':
+  Is the dwelling that the occupier occupies a house, an apartment, a townhouse or a unit?
   % else:
-  Does your ${ Who_User }'s lease specify a date when it expires?
+  Is the dwelling that ${ Who_Tenant } occupies a house, an apartment, a townhouse or a unit?
+  % endif
+yesno: Premises_Eligible
+default: yes
+---
+question: |
+  If not, do any of the below describe the tenancy?
+field: Lease_NonResidential
+dropdown:
+  - Student accomodation: Student_Accomodation
+  - Hotel: Hotel_Accomodation
+  - Residential park: Residential_Park
+  - Retirement vilalge: Retirement_Village
+  - AirBnb or similar rental service: Other_Accomodation
+---
+question: |
+  % if Who_Tenant == 'User':
+  Does your lease specify a date when it expires?
+  % elif Who_Tenant == 'Other':
+  Does the occupier's lease specify a date when it expires?
+  % else:
+  Does your ${ Who_Tenant }'s lease specify a date when it expires?
   % endif
 field: Lease_Type
 buttons:
   - "Yes": Lease_Fixed
   - "No": Lease_Periodic
+default: Lease_Fixed
 help: |
-  As you will see in our amended Product Scope Document, 
+  It is important to know if your lease specifies a date in which it expires, because this will determine whether you are in a fixed term or periodic tenancy. 
+   
+  If you have agreed to rent a residence for a fixed term, then this means that you have entered an agreement for a defined period. This set amount of time would allow you to rent a premise from a determined start date until an end date. This should be stated in your lease agreement.
+  
+  If you have entered into a periodic tenancy agreement, then this means that you would be renting a premise for a recurring period, in which a start and end date are not specified. Periodic tenancies are intended to continue permanently, or until a party does something to terminate the lease. A periodic tenancy agreement may also arise from a fixed term agreement if the tenant continues to rent the property past the original end date. The length of a ‘period’ during a periodic lease is the time between rental payments, which are determined in the tenancy agreement. 
+  
+  In some situations, tenants may enter a ‘fixed short-term agreement’, which is an agreement that lasts for 90 days or less. This agreement is considered periodic, therefore the same rules for termination apply to these type of agreement as they do for a periodic tenancy agreement. 
 ---
 question: |
-  % if Who_User == 'I am':
+  % if Who_Tenant == 'User':
   Did you receive a Form 2 or a Form 3?
+  % elif Who_Tenant == 'Other':
+  Did the occupier receive a Form 2 or a Form 3?
   % else:
-  Did your ${Who_User} receive a Form 2 or a Form 3?
+  Did your ${ Who_Tenant } receive a Form 2 or a Form 3?
   % endif
 field: Form_Type
 Choices:
   - Form 2
   - Form 3
+default: Form 2
 help: |
-  Again, as 
+  If the notice given by the landlord looked like this: 
+  
+  [FILE TIAS1.Form2.jpg]
+  
+  
+  Then click 'Form 2'.
+  
+  But if the notice given by the landlord looks like this:
+  
+  [FILE TIAS1.Form3.jpg]
+  
+  
+  Then click 'Form 3'.
 ---
 question: |
-  % if Who_User == 'I am':
-  On what ground did you allegedly breach the lease?
+  % if Who_Tenant == 'User':
+  On what ground did you allegedly breach your lease?
+  % elif Who_Tenant == 'Other':
+  On what ground did the occupier allegedly breach your lease?
   % else:
-  On what ground did your ${ Who_User } allegedly breach the lease?
+  On what ground did your ${ Who_Tenant } allegedly breach their lease?
   % endif
 field: Ground_Specified
 Choices:
-  - Non-Payment of Rent
-  - Other
+  - Unpaid rent only
+  - Other breach of agreement
+default: Unpaid rent only
 help: |
-  If you like leases
+
+  If landlord checked the 'Unpaied rent only' box as seen below:
+
+  [FILE TIAS1.Form2_Unpaid_Rent.jpg]
+  
+  Then answer 'Unpaid rent only'.
+  
+  But if landlord checked the 'Other breach of agreement' box as seen below:
+  
+  [FILE TIAS1.Form2_Other_Breach.jpg]
+  
+   Then answer 'Other breach of agreement'.
+  
 ---
 question: |
-  % if Who_User == 'I am':
+  % if Who_Tenant == 'User':
   When did you receive the ${ Form_Type }?
+  % elif Who_Tenant == 'Other':
+  When did the occupier receive the ${ Form_Type }?
   % else:
-  When did your ${ Who_User } tenant receive the ${ Form_Type }?
+  When did your ${ Who_Tenant } receive the ${ Form_Type }?
   % endif
 fields:
   - no label: Date_Form_Recieved
     datatype: date
 ---
 question: |
-  % if Who_User == 'I am':
+  % if Who_Tenant == 'User':
   When did you last pay rent?
+  % elif Who_Tenant == 'Other':
+  When did the occupier last pay rent?
   % else:
-  When did your ${ Who_User } last pay rent?
+  When did your ${ Who_Tenant } last pay rent?
   % endif
 fields:
   - no label: Rent_Last_Paid
@@ -113,10 +184,12 @@ dropdown:
   - selling the premises
 ---
 question: |
-  % if Who_User == 'I am':
-  When does your lease expiry?
+  % if Who_Tenant == 'User':
+  When does your lease expire?
+  % elif Who_Tenant == 'Other':
+  When does the occupier's lease expire?
   % else:
-  When does your ${ Who_User } lease expiry?
+  When does your ${ Who_Tenant }'s lease expire?
   % endif
 fields:
   - no label: Lease_Expiry
