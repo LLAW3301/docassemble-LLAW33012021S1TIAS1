@@ -111,7 +111,7 @@ subquestion:  |
    % if Ground_Specified == 'Unpaid rent only':
      % if Date_Form_Recieved < Rent_Last_Paid:
   
-  A tenant cannot be served a Form 2 by the landlord alleging non-payment of rent   as the breach of agreement before rent is not paid. 
+  A tenant cannot be served a Form 2 by the landlord alleging non-payment of rent as the breach of agreement before rent is not paid. 
        
   Are the following dates correct:
      
@@ -124,6 +124,7 @@ subquestion:  |
      % elif interval.days < Notice_Period + Moratorium and Remaining_Time.days > 0:
        % if Non_Payment_Period.days >= Moratorium:
          % if interval.days > 0 < Notice_Period:
+  Before the landlord can serve the tenant a Form 2, the tenant must have not paid rent for ${ Moratorium } days. Your response indicates that the tenant did not pay rent for ${ Non_Payment_Period } before ${ Date_Form_Recieved } when they were served the Form 2 by the landlord. 
   
   The tenant has until ${ End_Notice } to pay rent, or ${ Remaining_Time } days. If rent is not paid by ${ End_Notice }, then the tenant may need to give vacant  possession to the lanlord the day after on ${ Vacate_Day }.
   
@@ -132,21 +133,27 @@ subquestion:  |
   *Alternatively, click the 'Contact RentRight SA' button to be redirected to RentRight SA's website.*
          % elif interval.days < 0: 
    You specified that the tenant receives the Form 2 in the future. 
-    
-   Please click the 'restart' button.    
+   
+   Please click the 'restart' button and enter a valid date.    
  *For more tailored information regarding your personal tenancy dispute, please contact RentRight SA between the hours of 8am-8pm Monday to Friday on 1800 060 462.*
    
   *Alternatively, click the 'Contact RentRight SA' button to be redirected to RentRight SA's website.*
          % endif
        % elif Non_Payment_Period.days <= Moratorium: 
-   The tenant must not pay rent for 14 days before the landlord can serve them with a Form 2 for breach of agreement due to non-payment of rent.
+   The tenant must not pay rent for ${ Moratorium } days before the landlord can serve them with a Form 2 for breach of agreement due to non-payment of rent. Here the tenant did not pay rent for merely ${ Non_Payment_Period }. Therefore the notice given may be invalid.
     
-    *For more tailored information regarding your personal tenancy dispute, please contact RentRight SA between the hours of 8am-8pm Monday to Friday on 1800 060 462.*
+ *For more tailored information regarding your personal tenancy dispute, please contact RentRight SA between the hours of 8am-8pm Monday to Friday on 1800 060 462.*
    
-  *Alternatively, click the 'Contact RentRight SA' button to be redirected to RentRight SA's website.*
+ *Alternatively, click the 'Contact RentRight SA' button to be redirected to RentRight SA's website.*
        % endif
      % else: 
-       The tenant may have recieved adequate notice.
+  Before the landlord can serve the tenant a Form 2 for breach of agreement due to non-payment of rent, the tenant must have not paid rent for ${ Moratorium } days. Your response indicate that the tenant has not paid rent for ${ Non_Payment_Period }. 
+  
+  If the Form 2 was received on ${ Date_Form_Recieved }, then the tenant had until ${ End_Notice } to pay rent, or ${ Notice_Period } days. Since rent was not paid by ${ End_Notice }, then the tenant may have needed to give vacant possession to the landlord from ${ Vacate_Day }.
+       
+  *For more tailored information regarding your personal tenancy dispute, please contact RentRight SA between the hours of 8am-8pm Monday to Friday on 1800 060 462.*
+   
+  *Alternatively, click the 'Contact RentRight SA' button to be redirected to RentRight SA's website.*
      % endif
    % elif Ground_Specified == 'Other breach of agreement':
      % if Current_Date > Date_Form_Recieved:
