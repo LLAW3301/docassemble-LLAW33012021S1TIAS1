@@ -1,22 +1,57 @@
 ---
+metadata:
+  title: |
+    Tenny: An Out of Hours Tenancy Advisor
+  short title: |
+    Eviction Advsior
+  authors:
+    - names: Jordan Charli, Emily Poligerinos, Eric Tanuwidjaja, Spencer Thomas, Joshua Hughes and Aishwarya Manumari
+  organisation: RentRight SA
+  show login: True
+---
+default screen parts:
+  post: |
+    <div style="display: flex; height: 200px; align-items: flex-end; flex-direction: row-reverse">
+    <div style="margin: 5px"><img src="https://staff.flinders.edu.au/etc.clientlibs/flinders/clientlibs/clientlib-site/resources/images/flinderuni_main_logo_black.png" height="40">
+    </div>
+    <div style="margin: 5px; text-align: right">
+    <cite><small><i>
+    Developed by Flinders University in collaboration with RentRight SA
+    </i></small></cite>
+    </div>
+    </div>
+---
 include:
   - TIAS1.questions.yml
   - TIAS1.dates.yml
 ---
 objects:
   - endpoints: DADict
+  - RRSAlogo: DAStaticFile.using(filename='Rent_Right_SA.png')
 ---
 features:
   css: TIAS1.style.css
-  debug: True
-  hide standard menu: False
+  debug: false
+  hide standard menu: True
+  navigation back button: True
+---
+mandatory: True
+code: |
+  # To use a custom logo we need to set the 'logo' metadata to 
+  # some custom HTML.  The string below creates the HTML and 
+  # inserts into it the logo contained in the file SACATlogo using
+  # the python format() method 
+  RRSAlogostring = '<div class="media"><img src="{}" class="mr-3" height="50"><div class="media-body"></div></div>'.format(RRSAlogo.url_for())
+
+  # Once we've created the string we use set_parts() to set our new logo metadata
+  set_parts(logo=RRSAlogostring)
 ---
 mandatory: True
 code: |
   # This if statement ensures that the user only progresses to the main body of 
   # substantive questions if they answer positively to the intial eligibiliy 
   # questions, otherwise they'll be directed to an end screen. 
-  if User_Agree and Lease_SA and Lease_Residential:
+  if User_Agree and Lease_SA and Lease_Residential and Premises_Eligible:
     # This nested if statement directs users down the 'Form 2 (Grounds 
     # Specified)' limb of both sides of the flow chart. Essentially, if the 
     # tenant recieved a Form 2 from their landlord, then that landlord must
@@ -26,9 +61,10 @@ code: |
       Ground_Specified
       # If the breach of the tenancy agreement relied on by the landlord is 
       # non-payment of rent, then the notice period can only begin after rent
-      # is not paid for .... and ... 
-      if Ground_Specified == 'Non-Payment of Rent':
+      # is not paid for 14 days and a notive period of 7 days is given
+      if Ground_Specified == 'Unpaid rent only':
         Rent_Last_Paid
+        Moratorium = 14
         Notice_Period = 7
       else:
         Notice_Period = 7
@@ -36,10 +72,11 @@ code: |
     elif Lease_Type == "Lease_Periodic" and Form_Type == 'Form 3':
       Without_Grounds_or_Certain_Purpose
       if Without_Grounds_or_Certain_Purpose == 'No grounds specified':
-        Notice_Period = 90
+       Notice_Period = 90
+       Date_Form_Recieved
       else:
-        Certain_Purpose
-        Notice_Period = 60
+       Notice_Period = 60
+       Date_Form_Recieved
     # This nested elif statement directs users down the 'Form 3 (Without
     # Grounds)' and 'Form 3 (Posession Required by Landlord for Certain 
     # Purpose)' limb of the left ('Fixed') side of the flow chart. As on
@@ -52,35 +89,276 @@ code: |
     # upon expiry but only after providing 28 days notice. 
       if Without_Grounds_or_Certain_Purpose == 'No grounds specified':
         Lease_Expiry
+        Date_Form_Recieved
+        Notice_Period = 28
     # Nonetheless, we do not believe this limb is redundant on the left 
     # (periodic) side of the flow chart as the user could still potentially 
     # be served such notice by the landlord, whether mistakenly or knowingly. 
-      elif Without_Grounds_or_Certain_Purpose == 'Possession is required by landlord for certain purpose':
-        pass
+      elif Without_Grounds_or_Certain_Purpose == 'Possession is required by landlord         for certain purpose':
+           pass
     endpoints['final_screen']
   else:
     endpoints['ineligible']
 ---
 event: endpoints['final_screen']
-question: ""
+question: Thank you for using Tenny!
+buttons:
+  - Contact RentRight SA: exit 
+    url: https://www.syc.net.au/home/rentrightsa/contact-rentrightsa/ 
+  - Restart: restart
 subquestion:  |
- # Need to insert an if statement here so that far left side of flow chart words
- # (i.e., Fixed, Form 3).
- ${ interval.days } days
-  % if Lease_Type and Form_Type == 'Form 2' and Ground_Specified != 'Non-Payment of Rent':
- ${ Until_Vacate.days } days
- % elif Lease_Type =='Lease_Fixed' and Form_Type == 'Form 3' and Without_Grounds_or_Certain_Purpose == 'No grounds specified':
- ${ Until_Expiry.days } days
+ % if Lease_Type and Form_Type == 'Form 2':  
+   % if Ground_Specified == 'Unpaid rent only':
+     % if Date_Form_Recieved < Rent_Last_Paid:
+  
+  A tenant cannot be served a Form 2 by the landlord alleging non-payment of rent   as the breach of agreement before rent is not paid. 
+       
+  Are the following dates correct:
+     
+   Event | Date Provided
+    -------|---------
+    Date Form 2 was Received  | ${ Date_Form_Recieved }
+    Date Rent was Last Paid   | ${ Rent_Last_Paid }
+  
+  If not, click 'restart' button. Otherwise, the Form 2 served may be invalid.
+     % elif interval.days < Notice_Period + Moratorium and Remaining_Time.days > 0:
+       % if Non_Payment_Period.days >= Moratorium:
+         % if interval.days > 0 < Notice_Period:
+  
+  The tenant has until ${ End_Notice } to pay rent, or ${ Remaining_Time } days. If rent is not paid by ${ End_Notice }, then the tenant may need to give vacant  possession to the lanlord the day after on ${ Vacate_Day }.
+  
+   *For more tailored information regarding your personal tenancy dispute, please contact RentRight SA between the hours of 8am-8pm Monday to Friday on 1800 060 462.*
+   
+  *Alternatively, click the 'Contact RentRight SA' button to be redirected to RentRight SA's website.*
+         % elif interval.days < 0: 
+   You specified that the tenant receives the Form 2 in the future. 
+    
+   Please click the 'restart' button.    
+ *For more tailored information regarding your personal tenancy dispute, please contact RentRight SA between the hours of 8am-8pm Monday to Friday on 1800 060 462.*
+   
+  *Alternatively, click the 'Contact RentRight SA' button to be redirected to RentRight SA's website.*
+         % endif
+       % elif Non_Payment_Period.days <= Moratorium: 
+   The tenant must not pay rent for 14 days before the landlord can serve them with a Form 2 for breach of agreement due to non-payment of rent.
+    
+    *For more tailored information regarding your personal tenancy dispute, please contact RentRight SA between the hours of 8am-8pm Monday to Friday on 1800 060 462.*
+   
+  *Alternatively, click the 'Contact RentRight SA' button to be redirected to RentRight SA's website.*
+       % endif
+     % else: 
+       The tenant may have recieved adequate notice.
+     % endif
+   % elif Ground_Specified == 'Other breach of agreement':
+     % if Current_Date > Date_Form_Recieved:
+       % if interval.days < Notice_Period + Vacate_Period and Remaining_Time.days > 0:
+ Since the tenant received the Form 2 on ${ Date_Form_Recieved }, and the         landlord  must give the tenant ${ Notice_Period} days notice, the tenant has     until ${ End_Notice } to remedy this breach, which is ${ Remaining_Time } away. 
+  
+   After that time, if the tenant has not remedied this alleged breach, the tenant will have a further ${ Vacate_Period } days to give vacanct possession to the landlord.
+   
+   *For more tailored information regarding your personal tenancy dispute, please contact RentRight SA between the hours of 8am-8pm Monday to Friday on 1800 060 462.*
+   
+  *Alternatively, click the 'Contact RentRight SA' button to be redirected to RentRight SA's website.*
+       % elif interval.days < Notice_Period + Vacate_Period and Remaining_Time.days < 0:
+  The landlord must give the tenant ${ Notice_Period } days to remedy a breach of agreement other than non-payment of rent.
+ 
+  After that time, if the tenant has not remedied this alleged breach, the tenant will have a further ${ Vacate_Period } days to give vacanct possession to the landlord.
+ 
+ Since the landlord served the Form 2 to the tenant ${ interval } ago, if the breach has not yet been remedied by the tenant within that ${ Notice_Period } period, then the tenant may need to give vacant posession to the landlord.
+ 
+  *For more tailored information regarding your personal tenancy dispute, please contact RentRight SA between the hours of 8am-8pm Monday to Friday on 1800 060 462.*
+   
+ *Alternatively, click the 'Contact RentRight SA' button to be redirected to RentRight SA's website.*
+       
+       % else:
+ The landlord must give the tenant ${ Notice_Period } days to remedy a breach of agreement other than non-payment of rent.
+ 
+  After that time, if the tenant has not remedied this alleged breach, the tenant will have a further ${ Vacate_Period } days to give vacanct possession to the landlord.
+ 
+ Since the landlord served the Form 2 to the tenant ${ interval } ago, if the breach has not yet been remedied by the tenant within that ${ Notice_Period } period, then the tenant may need to give vacant posession to the landlord.
+ 
+  *For more tailored information regarding your personal tenancy dispute, please contact RentRight SA between the hours of 8am-8pm Monday to Friday on 1800 060 462.*
+   
+ *Alternatively, click the 'Contact RentRight SA' button to be redirected to RentRight SA's website.*
+       % endif
+     % else:
+ You specified that the tenant receives the Form 2 in the future. 
+    
+ Please click the 'restart' button.
+     % endif
+   % endif
+ % elif Lease_Type == 'Lease_Fixed' and Form_Type == 'Form 3':
+     % if Without_Grounds_or_Certain_Purpose == 'No grounds specified':
+       % if Current_Date > Date_Form_Recieved:
+         % if Notice_Given.days > Notice_Period:
+ The landlord must give the tenant at least ${ Notice_Period } days notice before expiration of the lease. 
+   
+ Here the landlord has given the tenant ${ Notice_Given } days notice. This means the landlord has given the tenant valid notice.
+   
+  *For more tailored information regarding your personal tenancy dispute, please contact RentRight SA between the hours of 8am-8pm Monday to Friday on 1800 060 462.*
+   
+  *Alternatively, click the 'Contact RentRight SA' button to be redirected to RentRight SA's website.*
+         % else: 
+  The landlord must give the tenant at least ${ Notice_Period } days notice before expiration of the lease. The landlord should have given the tenant notice by ${ Latest_Notice }.
+  
+  Therefore, the tenant may only need to give vaccant posession of the dwelling to the landlord on or after ${ Vacate_Date }.
+  
+   *For more tailored information regarding your personal tenancy dispute, please contact RentRight SA between the hours of 8am-8pm Monday to Friday on 1800 060 462.*
+   
+  *Alternatively, click the 'Contact RentRight SA' button to be redirected to RentRight SA's website.*
+         % endif
+       % else: 
+    You specified that the tenant receives the Form 3 in the future. 
+    
+    Please click the 'restart' button.
+       % endif
+     % else: 
+   A landlord cannot terminate a fixed lease because they require                  possession of the dwelling for a certain purpose.
+   
+  *For more tailored information regarding your personal tenancy dispute, please contact RentRight SA between the hours of 8am-8pm Monday to Friday on 1800 060 462.*
+   
+  *Alternatively, click the 'Contact RentRight SA' button to be redirected to RentRight SA's website.*
+     % endif
+ % elif Lease_Type == 'Lease_Periodic' and Form_Type == 'Form 3':
+     % if Without_Grounds_or_Certain_Purpose == 'No grounds specified':
+       % if Current_Date > Date_Form_Recieved:          
+   Since the tenant received the Form 3 on ${ Date_Form_Recieved }, and the        landlord must give the tenant ${ Notice_Period} days notice, the tenant has        until ${ End_Notice } before they may need to give vacant posession to the landlord, which is ${ Remaining_Time } away. 
+   *For more tailored information regarding your personal tenancy dispute, please contact RentRight SA between the hours of 8am-8pm Monday to Friday on 1800 060 462.*
+   
+  *Alternatively, click the 'Contact RentRight SA' button to be redirected to RentRight SA's website.*
+       % else:
+   You specified that the tenant receives the Form 3 in the future. 
+   
+   Please click the 'restart' button.   
+       % endif
+     % else:
+       % if Current_Date > Date_Form_Recieved:  
+   Since the tenant received the Form 3 on ${ Date_Form_Recieved }, and the        landlord must give the tenant ${ Notice_Period} days notice, the tenant has        until ${ End_Notice } before they may need to give vacant posession to the landlord, which is ${ Remaining_Time } away.
+   
+  *For more tailored information regarding your personal tenancy dispute, please contact RentRight SA between the hours of 8am-8pm Monday to Friday on 1800 060 462.*
+   
+  *Alternatively, click the 'Contact RentRight SA' button to be redirected to RentRight SA's website.*
+       % else:
+   You specified that the tenant receives the Form 3 in the future. 
+   
+   Please click the 'restart' button.   
+       % endif
+     % endif
  % endif
 ---
 event: endpoints['ineligible']
-question: ""
+question: Tenny's Sorry it Can't Help
+buttons:
+  - Contact RentRight SA: exit 
+    url: https://www.syc.net.au/home/rentrightsa/contact-rentrightsa/ 
+  - Restart: restart
 subquestion:  |
   % if User_Agree == False:
-    User_Disagree_Final_Screen
+    You must agree to the terms in order to proceed.
   % elif Lease_SA == False:
-    Lease_Not_SA_Final_Screen
-  % elif Lease_Residential == False:
-    Lease_Not_Residential_Final_Screen
+    Since this application considers only South Australia's Residential Tenancy   Act,     the information provided only applies to leases of premises located in South           Australia. 
+  % elif Lease_Residential == False: 
+  This application only considers the *Residential Tenancies Act* which solely applies to residential tenancies where the occupier occupies the dwelling for the purpose of residence. 
+  
+    % if Who_Tenant == 'User':
+  If the lease is over a dwelling which you live in, please click 'Back' then 'Yes' to the question 'Do you live in that dwelling?'. 
+    % elif Who_Tenant == 'Other':
+  If the lease is over a dwelling which your ${ Who_Tenant } lives in, please click 'Back' then 'Yes' to the question 'Do you live in that dwelling?'. 
+    % else:
+  If the lease is over a dwelling which the occupier lives in please click 'Back', then 'Yes' to the question 'Do you live in that dwelling?'. 
+    % endif
+  % elif Premises_Eligible == False:
+    % if Lease_NonResidential == 'Student_Accomodation': 
+  **Recommendations for students currently living in university or college/halls of residence managed accommodation:** The Residential Tenancies Act 1995  does not cover university managed accommodations, or halls of residence or college, therefore Tenny cannot aid you in your specific dispute.
+      
+  Universities that offer accommodation for students hold the responsibility to manage and mitigate against tenancy disputes that may arise on campus. This means that each university will have independent agreements that detail the responsibilities it holds to the student when entering a tenancy agreement. You may benefit from seeking tenancy advice directly from your university. 
+
+  **Recommendations for students living in commercial accommodation:** The Residential Tenancies Act 1995 (‘RTA’)  does apply to commercial student accommodation (e.g. UniLodge or Urbanest) as the residence it not within an educational institution.  If you entered into a fixed term agreement, please attempt the application again and state that your lease specified an end date. If your lease does not specify and end date, Tenny is unable to assist you in your specific dispute.
+  
+  **Recommendations for students living in commercial accommodation:** If you are living in a student hostel, you are covered by s 5 of the Residential Tenancies Act 1995.  Please click the 'Restart' button to attempt the application again, but do not select that you are residing in student accommodation. 
+    % elif Lease_NonResidential == 'Hotel_Accomodation': 
+  **Recommendations for students living in commercial accommodation:** Hotels and motels are not covered by the Residential Tenancies Act 1997, therefore Tenny cannot aid you in your specific dispute. A hotel or motel has the right to evict a guest from the premises if the guest infringes upon any of the hotel or motels rules.
+    % elif Lease_NonResidential == 'Residential_Park':
+  **Information for those engaged in an agreement to which the Residential Parks Act 2007 applies:** If you are renting a site within a residential park (e.g. a caravan park), the Residential Tenancies Act 1995  will not apply to your situation. This means that Tenny will not be able to assist you. 
+  
+  [This link](https://www.sa.gov.au/__data/assets/pdf_file/0009/560439/0008_ResidentialParksAGuide_RentSiteAndDwelling_ACCESSIBLE.pdf.)  explains such rights and responsibilities and also provides fundamental information for those living in a residential park.
+  
+  If you wish to manage a dispute and have already attempted to discuss the issue with your park operator, you may be eligible to contact Consumer Business Services (CBS) to receive free and independent advice tailored to your specific situation. 
+  
+  The contact information for CBS Tenancies is as follows:
+
+  **Phone**: 131 882
+  
+  **Email**: ocbatenancyadvice@sa.gov.au
+  
+  **Postal Address**:
+  
+  GPO Box 965
+  
+  Adelaide SA 5001
+  
+  If you do not wish to contact CBS, you may be able to contact the South Australian Civil and Administrative Tribunal (SACAT) to receive informal ways of determining residential park disputes. SACAT is available from 9:00am to 4:30om on Monday to Friday and does not open on public holidays.
+
+  The contact information for SACAT is as follows:
+  
+  **Phone**: 1800 723 767
+  
+  **Email**: sacat@sacat.sa.gov.au
+  
+  **Postal Address**:
+  
+  GPO Box 2361
+  
+  Adelaide SA 5001
+    % elif Lease_NonResidential == 'Retirement_Village':
+  **Information for those living in a retirement village:** The Residential Tenancies Act 1995  does not cover tenancy within retirement villages, therefore Tenny will not be able to assist you. 
+  
+  If you wish to learn about your rights and responsibilities as a residence of a retirement village, please visit [this website](https://lsc.sa.gov.au/resources/KnowingYourRightsBooklet.pdf.).
+     
+  If you wish to speak to someone about your rights and responsibilities, the Office for the Ageing may be able to assist you. 
+  
+  The contact information for the Office for the Ageing is as follows:
+    
+    **Phone**: 8204 2420
+    
+    **Email**: retirementvillages@sa.gov.au
+  
+  The Rights Advocacy Service may also be able to assist you if you are facing     residency rights issues. The contact information for Aged Rights Advocacy Service is as follows:
+  
+  **Phone**: 8232 5377
+  
+  **Website**: www.sa.agedrights.asn.au
+  
+  If you have already contacted these agencies and have failed to resolve your residential dispute, you may be eligible to apply to the South Australian Civil and Administrative Tribunal. SACAT is available from 9:00am to 4:30om on Monday to Friday and does not open on public holidays.
+  
+  The contact information for SACAT is as follows:
+  
+  **Phone**: 1800 723 767
+  
+  **Email**: sacat@sacat.sa.gov.au
+  
+  **Postal Address**:
+  
+  GPO Box 2361
+  
+  Adelaide SA 5001
+  
+    % else:
+  **Information for those living in an Airbnb or similar rental service:**
+  Airbnb or similar rental services are not covered by the Residential Tenancies Act 1995 , therefore Tenny will be unable to assist you. 
+  
+  If you have been in contact with your landlord/seller and the dispute remains unsettled, you may be able to contact Consumer and Business Services (CBS) for advice.
+  The contact information for CBS is as follows:
+  
+  **[Website](https://forms.sa.gov.au/#/form/5780e4f27c79ff278c3875af/app/6098b0d34d43311f18807ce4)**
+  
+  **Phone**: 131 882
+  
+  **Post**:
+  
+  GPO Box 1719
+  
+  Adelaide SA 5001
+
+    % endif
   % endif
 ---
