@@ -20,7 +20,6 @@ dropdown:
   - A family member: family member
   - A friend: friend
   - Someone else: Other
-default: User
 ---
 question: |
   % if Who_Tenant == 'User':
@@ -31,7 +30,6 @@ question: |
   Is your ${ Who_Tenant }'s lease over a dwelling in South Australia?
   % endif
 yesno: Lease_SA
-default: yes
 ---
 question: |
   % if Who_Tenant == 'User':
@@ -42,7 +40,6 @@ question: |
   Does your ${ Who_Tenant } live in that dwelling?
   % endif
 yesno: Lease_Residential
-default: yes
 ---
 question: |
   % if Who_Tenant == 'User':
@@ -53,7 +50,6 @@ question: |
   Is the dwelling that ${ Who_Tenant } occupies a house, an apartment, a townhouse or a unit?
   % endif
 yesno: Premises_Eligible
-default: yes
 ---
 question: |
   If not, do any of the below describe the tenancy?
@@ -77,7 +73,6 @@ field: Lease_Type
 buttons:
   - "Yes": Lease_Fixed
   - "No": Lease_Periodic
-default: Lease_Fixed
 help: |
   It is important to know if your lease specifies a date in which it expires, because this will determine whether you are in a fixed term or periodic tenancy. 
    
@@ -99,7 +94,6 @@ field: Form_Type
 Choices:
   - Form 2
   - Form 3
-default: Form 2
 help: |
   If the notice given by the landlord looked like this: 
   
@@ -127,7 +121,6 @@ field: Ground_Specified
 Choices:
   - Unpaid rent only
   - Other breach of agreement
-default: Unpaid rent only
 help: |
 
   If landlord checked the 'Unpaied rent only' box as seen below:
